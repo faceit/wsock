@@ -22,17 +22,20 @@
 
 -define(CTRL, "\r\n").
 
--spec decode(Data::binary(), Type::request | response) -> {ok,#http_message{}} | {error, malformed_request}.
+-spec decode(Data::binary(), Type::request | response) -> Result when
+      Result :: {ok, #http_message{}}
+              | {error, fragmented_http_message}
+              | {error, malformed_request}.
 decode(Data, Type) ->
   case process_startline(Data, Type) of
     fragmented ->
-      fragmented_http_message;
+      {error, fragmented_http_message};
     {error, _} ->
       {error, malformed_request};
     {ok, StartlineFields, Rest} ->
       case process_headers(Rest) of
         fragmented ->
-          fragmented_http_message;
+          {error, fragmented_http_message};
         {error, _} ->
           {error, malformed_request};
         {ok, HeadersFields} ->
