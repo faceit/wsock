@@ -17,7 +17,7 @@
 -module(wsock_handshake).
 -include("wsock.hrl").
 
--export([open/3, handle_response/2]).
+-export([open/3, open/4, handle_response/2]).
 -export([handle_open/1, response/1]).
 
 -define(VERSION, 13).
@@ -65,6 +65,10 @@ response(ClientWebsocketKey) ->
 
 -spec open(Resource ::string(), Host ::string(), Port::integer()) -> {ok, #handshake{}}.
 open(Resource, Host, Port) ->
+    open(Resource, Host, Port, []).
+
+-spec open(Resource ::string(), Host ::string(), Port::integer(), Options::list()) -> {ok, #handshake{}}.
+open(Resource, Host, Port, Options) ->
   RequestLine = [
     {method, "GET"},
     {version, "1.1"},
@@ -77,8 +81,13 @@ open(Resource, Host, Port) ->
     {"Connection", "upgrade"},
     {"Sec-Websocket-Key", wsock_key:generate()},
     {"Sec-Websocket-Version", integer_to_list(?VERSION)}
-  ],
-
+  ] ++
+  case proplists:get_value(compress, Options, true) of
+      true ->
+          [{"Sec-WebSocket-Extensions", "permessage-deflate"}];
+      false ->
+          []
+  end,
   Message = wsock_http:build(request, RequestLine, Headers),
   {ok, #handshake{ version = ?VERSION, type = open, message = Message}}.
 

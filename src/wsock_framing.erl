@@ -205,6 +205,10 @@ apply_options(Frame, [{opcode, pong} | Tail]) ->
   T = Frame#frame{opcode = ?OP_CODE_PONG},
   apply_options(T, Tail);
 
+apply_options(Frame, [comp | Tail]) ->
+  T = Frame#frame{rsv1 = 1, rsv2 = 0, rsv3 = 0},
+  apply_options(T, Tail);
+
 apply_options(Frame, []) ->
   Frame.
 
